@@ -3,7 +3,6 @@ import { DataSource, EntityManager } from 'typeorm';
 import { Movie } from '../movies/entities/movie.entity';
 import { MoviesCache } from '../movies/movies.cache';
 import { Rating } from './entities/rating.entity';
-import { UsersService } from '../users/users.service';
 import { RatingsService } from './ratings.service';
 
 describe('RatingsService', () => {
@@ -15,7 +14,6 @@ describe('RatingsService', () => {
     createQueryBuilder: jest.Mock;
   };
   let update: { set: jest.Mock; where: jest.Mock; execute: jest.Mock };
-  let users: { ensureExists: jest.Mock };
   let cache: { invalidate: jest.Mock };
   let service: RatingsService;
 
@@ -38,14 +36,9 @@ describe('RatingsService', () => {
     const dataSource = {
       transaction: (cb: (m: EntityManager) => unknown) => cb(manager as unknown as EntityManager),
     } as unknown as DataSource;
-    users = { ensureExists: jest.fn().mockResolvedValue(undefined) };
     cache = { invalidate: jest.fn().mockResolvedValue(undefined) };
 
-    service = new RatingsService(
-      dataSource,
-      users as unknown as UsersService,
-      cache as unknown as MoviesCache,
-    );
+    service = new RatingsService(dataSource, cache as unknown as MoviesCache);
   });
 
   it('adds a new rating: increments sum and count and returns the new average', async () => {
@@ -56,7 +49,6 @@ describe('RatingsService', () => {
 
     const result = await service.rate('movie-1', 'user-1', 8);
 
-    expect(users.ensureExists).toHaveBeenCalledWith('user-1');
     expect(manager.create).toHaveBeenCalledWith(Rating, {
       userId: 'user-1',
       movieId: 'movie-1',
@@ -71,7 +63,11 @@ describe('RatingsService', () => {
   });
 
   it('updates an existing rating: adjusts the sum by the delta and keeps the count', async () => {
-    const existing = Object.assign(new Rating(), { userId: 'user-1', movieId: 'movie-1', value: 4 });
+    const existing = Object.assign(new Rating(), {
+      userId: 'user-1',
+      movieId: 'movie-1',
+      value: 4,
+    });
     manager.findOne.mockResolvedValueOnce(movie(10, 2)).mockResolvedValueOnce(existing);
     manager.findOneOrFail.mockResolvedValue(movie(15, 2));
 

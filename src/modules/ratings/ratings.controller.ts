@@ -1,11 +1,13 @@
-import { Body, Controller, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
-import { ApiHeader, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, HttpCode, Param, ParseUUIDPipe, Post, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUserId } from '../../common/decorators/current-user-id.decorator';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RateMovieDto, RatingResponseDto } from './dto/rate-movie.dto';
 import { RatingsService } from './ratings.service';
 
 @ApiTags('ratings')
-@ApiHeader({ name: 'x-user-id', description: 'Rating user id (uuid)', required: true })
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('movies/:movieId/ratings')
 export class RatingsController {
   constructor(private readonly ratings: RatingsService) {}

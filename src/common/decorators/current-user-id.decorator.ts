@@ -1,16 +1,14 @@
-import { ExecutionContext, UnauthorizedException, createParamDecorator } from '@nestjs/common';
+import { ExecutionContext, createParamDecorator } from '@nestjs/common';
 
-const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+export interface AuthUser {
+  userId: string;
+  role: string;
+}
 
-export function extractUserId(context: ExecutionContext): string {
-  const request = context.switchToHttp().getRequest<{ headers: Record<string, unknown> }>();
-  const id = request.headers['x-user-id'];
-  if (typeof id !== 'string' || !UUID_PATTERN.test(id)) {
-    throw new UnauthorizedException('A valid X-User-Id header (uuid) is required');
-  }
-  return id;
+export function currentUserId(context: ExecutionContext): string {
+  return context.switchToHttp().getRequest<{ user: AuthUser }>().user.userId;
 }
 
 export const CurrentUserId = createParamDecorator((_data: unknown, context: ExecutionContext) =>
-  extractUserId(context),
+  currentUserId(context),
 );

@@ -1,12 +1,24 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Post } from '@nestjs/common';
-import { ApiHeader, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiBearerAuth, ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { CurrentUserId } from '../../common/decorators/current-user-id.decorator';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { MovieResponseDto } from '../movies/dto/movie-response.dto';
 import { AddToCollectionDto } from './dto/add-to-collection.dto';
 import { WatchlistService } from './watchlist.service';
 
 @ApiTags('watchlist')
-@ApiHeader({ name: 'x-user-id', description: 'User id (uuid)', required: true })
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
 @Controller('watchlist')
 export class WatchlistController {
   constructor(private readonly watchlist: WatchlistService) {}

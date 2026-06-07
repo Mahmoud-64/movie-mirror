@@ -22,14 +22,25 @@ OpenAPI docs at **http://localhost:8080/api/docs**.
 npm install
 npm run start:dev
 npm run test:cov      # unit tests with coverage gate (>= 85%)
+npm run test:e2e      # end-to-end tests (needs postgres + redis running)
 ```
 
 ## Architecture
-- **NestJS** feature modules: `movies`, `genres`, `ratings`, `watchlist`, `auth`, `tmdb`, `sync`.
+- **NestJS** feature modules: `auth`, `movies`, `genres`, `ratings`, `watchlist`, `tmdb`, `sync`.
 - **PostgreSQL** (TypeORM, schema synced from entities) is the source of truth.
 - **Redis** caches read-heavy endpoints; writes invalidate affected keys.
 - **Sync** ingests TMDB data idempotently on a schedule; the upstream API is
   never on the request path, so reads stay available during outages.
+- **Security**: helmet, request rate limiting (throttler), and JWT auth. Personal
+  endpoints require a bearer token; admin endpoints require the `admin` role.
+
+## Authentication
+```bash
+# register (returns { accessToken }) then send it as a bearer token
+curl -X POST localhost:8080/auth/register -H 'Content-Type: application/json' \
+  -d '{"email":"me@example.com","password":"password123"}'
+curl localhost:8080/watchlist -H 'Authorization: Bearer <accessToken>'
+```
 
 ## Project structure
 ```
@@ -43,15 +54,18 @@ test/        end-to-end tests
 ```
 
 ## API overview
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/movies` | List with pagination, search, genre filter, sort; includes average rating |
-| GET | `/movies/:id` | Movie detail |
-| POST/PATCH/DELETE | `/movies` | Admin CRUD |
-| GET | `/genres` | List genres |
-| POST | `/movies/:id/ratings` | Rate a movie (1–10) |
-| GET/POST/DELETE | `/watchlist`, `/favourites` | Manage personal lists |
-| GET | `/health` | Health check |
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/auth/register`, `/auth/login` | public | Obtain a JWT access token |
+| GET | `/movies` | public | List with pagination, search, genre filter, sort; includes average rating |
+| GET | `/movies/:id` | public | Movie detail |
+| POST/PATCH/DELETE | `/movies` | admin | Movie CRUD |
+| GET | `/genres` | public | List genres (ids for filtering) |
+| POST | `/movies/:id/ratings` | user | Rate a movie (1–10); average recomputes |
+| GET/POST/DELETE | `/watchlist`, `/favourites` | user | Manage personal lists |
+| GET | `/health` | public | Health check |
+
+Full request/response schemas are documented in Swagger at `/api/docs`.
 
 ## License
 MIT

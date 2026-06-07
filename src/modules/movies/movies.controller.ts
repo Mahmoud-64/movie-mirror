@@ -11,8 +11,11 @@ import {
   Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiCreatedResponse, ApiHeader, ApiOkResponse, ApiTags } from '@nestjs/swagger';
-import { AdminGuard } from '../../common/guards/admin.guard';
+import { ApiBearerAuth, ApiCreatedResponse, ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
+import { RolesGuard } from '../../common/guards/roles.guard';
+import { UserRole } from '../users/entities/user.entity';
 import { CreateMovieDto, UpdateMovieDto } from './dto/create-movie.dto';
 import { ListMoviesQueryDto } from './dto/list-movies-query.dto';
 import { MovieResponseDto, PaginatedMoviesDto } from './dto/movie-response.dto';
@@ -36,16 +39,18 @@ export class MoviesController {
   }
 
   @Post()
-  @UseGuards(AdminGuard)
-  @ApiHeader({ name: 'x-admin-token', description: 'Admin API key', required: true })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
   @ApiCreatedResponse({ type: MovieResponseDto })
   create(@Body() body: CreateMovieDto): Promise<MovieResponseDto> {
     return this.movies.create(body);
   }
 
   @Patch(':id')
-  @UseGuards(AdminGuard)
-  @ApiHeader({ name: 'x-admin-token', description: 'Admin API key', required: true })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
   @ApiOkResponse({ type: MovieResponseDto })
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -55,8 +60,9 @@ export class MoviesController {
   }
 
   @Delete(':id')
-  @UseGuards(AdminGuard)
-  @ApiHeader({ name: 'x-admin-token', description: 'Admin API key', required: true })
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN)
+  @ApiBearerAuth()
   @HttpCode(204)
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {
     return this.movies.remove(id);

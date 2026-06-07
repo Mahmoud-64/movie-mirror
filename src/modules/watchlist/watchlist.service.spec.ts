@@ -1,7 +1,6 @@
 import { NotFoundException } from '@nestjs/common';
 import { Repository } from 'typeorm';
 import { Movie } from '../movies/entities/movie.entity';
-import { UsersService } from '../users/users.service';
 import { WatchlistItem } from './entities/watchlist-item.entity';
 import { WatchlistService } from './watchlist.service';
 
@@ -9,7 +8,6 @@ describe('WatchlistService (shared collection behaviour)', () => {
   let insert: { insert: jest.Mock; values: jest.Mock; orIgnore: jest.Mock; execute: jest.Mock };
   let items: { createQueryBuilder: jest.Mock; delete: jest.Mock; find: jest.Mock };
   let movies: { existsBy: jest.Mock };
-  let users: { ensureExists: jest.Mock };
   let service: WatchlistService;
 
   beforeEach(() => {
@@ -25,17 +23,14 @@ describe('WatchlistService (shared collection behaviour)', () => {
       find: jest.fn(),
     };
     movies = { existsBy: jest.fn().mockResolvedValue(true) };
-    users = { ensureExists: jest.fn().mockResolvedValue(undefined) };
     service = new WatchlistService(
       items as unknown as Repository<WatchlistItem>,
       movies as unknown as Repository<Movie>,
-      users as unknown as UsersService,
     );
   });
 
-  it('adds idempotently after ensuring the user and movie exist', async () => {
+  it('adds idempotently after confirming the movie exists', async () => {
     await service.add('user-1', 'movie-1');
-    expect(users.ensureExists).toHaveBeenCalledWith('user-1');
     expect(insert.values).toHaveBeenCalledWith({ userId: 'user-1', movieId: 'movie-1' });
     expect(insert.orIgnore).toHaveBeenCalled();
   });

@@ -5,7 +5,6 @@ const base = {
   REDIS_URL: 'redis://localhost:6379',
   TMDB_API_TOKEN: 'token',
   JWT_SECRET: 'a-sufficiently-long-secret',
-  ADMIN_API_KEY: 'admin-key-123',
 };
 
 describe('validateEnv', () => {

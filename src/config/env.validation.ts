@@ -12,7 +12,6 @@ const envSchema = z.object({
   TMDB_SYNC_PAGES: z.coerce.number().int().positive().default(5),
   JWT_SECRET: z.string().min(16),
   JWT_EXPIRES_IN: z.string().default('1d'),
-  ADMIN_API_KEY: z.string().min(8),
 });
 
 export type AppEnv = z.infer<typeof envSchema>;

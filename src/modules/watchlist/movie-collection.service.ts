@@ -2,7 +2,6 @@ import { NotFoundException } from '@nestjs/common';
 import { ObjectLiteral, Repository } from 'typeorm';
 import { MovieResponseDto } from '../movies/dto/movie-response.dto';
 import { Movie } from '../movies/entities/movie.entity';
-import { UsersService } from '../users/users.service';
 
 export interface MovieCollectionItem extends ObjectLiteral {
   userId: string;
@@ -18,11 +17,9 @@ export abstract class MovieCollectionService<T extends MovieCollectionItem> {
   protected constructor(
     private readonly items: Repository<T>,
     private readonly movies: Repository<Movie>,
-    private readonly users: UsersService,
   ) {}
 
   async add(userId: string, movieId: string): Promise<void> {
-    await this.users.ensureExists(userId);
     if (!(await this.movies.existsBy({ id: movieId }))) {
       throw new NotFoundException(`Movie ${movieId} not found`);
     }

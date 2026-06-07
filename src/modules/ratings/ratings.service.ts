@@ -3,7 +3,6 @@ import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource, EntityManager } from 'typeorm';
 import { Movie } from '../movies/entities/movie.entity';
 import { MoviesCache } from '../movies/movies.cache';
-import { UsersService } from '../users/users.service';
 import { Rating } from './entities/rating.entity';
 import { RatingResponseDto } from './dto/rate-movie.dto';
 
@@ -11,13 +10,10 @@ import { RatingResponseDto } from './dto/rate-movie.dto';
 export class RatingsService {
   constructor(
     @InjectDataSource() private readonly dataSource: DataSource,
-    private readonly users: UsersService,
     private readonly cache: MoviesCache,
   ) {}
 
   async rate(movieId: string, userId: string, value: number): Promise<RatingResponseDto> {
-    await this.users.ensureExists(userId);
-
     const movie = await this.dataSource.transaction((manager) =>
       this.applyRating(manager, movieId, userId, value),
     );
