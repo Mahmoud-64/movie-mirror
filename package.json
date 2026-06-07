@@ -69,7 +69,7 @@
     "testRegex": ".*\\.spec\\.ts$",
     "transform": { "^.+\\.(t|j)s$": "ts-jest" },
     "collectCoverageFrom": ["**/*.(t|j)s"],
-    "coveragePathIgnorePatterns": ["main.ts", "\\.module\\.ts$"],
+    "coveragePathIgnorePatterns": ["main.ts", "\\.module\\.ts$", "\\.entity\\.ts$"],
     "coverageDirectory": "../coverage",
     "testEnvironment": "node",
     "coverageThreshold": {

@@ -9,6 +9,7 @@ const envSchema = z.object({
   TMDB_API_BASE_URL: z.string().url().default('https://api.themoviedb.org/3'),
   TMDB_API_TOKEN: z.string().min(1),
   TMDB_SYNC_CRON: z.string().default('0 3 * * *'),
+  TMDB_SYNC_PAGES: z.coerce.number().int().positive().default(5),
   JWT_SECRET: z.string().min(16),
   JWT_EXPIRES_IN: z.string().default('1d'),
 });

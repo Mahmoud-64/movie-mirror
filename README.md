@@ -31,9 +31,6 @@ npm run test:cov      # unit tests with coverage gate (>= 85%)
 - **Sync** ingests TMDB data idempotently on a schedule; the upstream API is
   never on the request path, so reads stay available during outages.
 
-See [`specs/001-tmdb-service`](./specs/001-tmdb-service) for the full
-specification, implementation plan and task breakdown.
-
 ## Project structure
 ```
 src/
