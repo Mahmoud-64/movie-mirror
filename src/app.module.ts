@@ -6,6 +6,7 @@ import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { HealthController } from './health/health.controller';
 import { validateEnv } from './config/env.validation';
 import { DatabaseModule } from './database/database.module';
+import { LoggingModule } from './common/logging/logging.module';
 import { RedisCacheModule } from './common/cache/redis-cache.module';
 import { TmdbModule } from './modules/tmdb/tmdb.module';
 import { SyncModule } from './modules/sync/sync.module';
@@ -23,6 +24,7 @@ import { AuthModule } from './modules/auth/auth.module';
     }),
     ScheduleModule.forRoot(),
     ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
+    LoggingModule,
     RedisCacheModule,
     DatabaseModule,
     TmdbModule,
