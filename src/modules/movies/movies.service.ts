@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { ConflictException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, SelectQueryBuilder } from 'typeorm';
+import { In, Repository, SelectQueryBuilder } from 'typeorm';
+import { Genre } from '../genres/entities/genre.entity';
 import { Movie } from './entities/movie.entity';
+import { CreateMovieDto, UpdateMovieDto } from './dto/create-movie.dto';
 import { ListMoviesQueryDto, MovieSortBy, SortOrder } from './dto/list-movies-query.dto';
 import { MovieResponseDto, PaginatedMoviesDto } from './dto/movie-response.dto';
 import { MoviesCache } from './movies.cache';
@@ -17,6 +19,7 @@ const SORT_COLUMNS: Record<MovieSortBy, string> = {
 export class MoviesService {
   constructor(
     @InjectRepository(Movie) private readonly movies: Repository<Movie>,
+    @InjectRepository(Genre) private readonly genres: Repository<Genre>,
     private readonly cache: MoviesCache,
   ) {}
 
@@ -43,6 +46,56 @@ export class MoviesService {
       }
       return MovieResponseDto.fromEntity(movie);
     });
+  }
+
+  async create(dto: CreateMovieDto): Promise<MovieResponseDto> {
+    if (await this.movies.existsBy({ tmdbId: dto.tmdbId })) {
+      throw new ConflictException(`Movie with tmdbId ${dto.tmdbId} already exists`);
+    }
+    const movie = this.movies.create({
+      tmdbId: dto.tmdbId,
+      title: dto.title,
+      overview: dto.overview ?? null,
+      releaseDate: dto.releaseDate ?? null,
+      posterPath: dto.posterPath ?? null,
+      popularity: dto.popularity ?? 0,
+      genres: await this.resolveGenres(dto.genreIds),
+    });
+    const saved = await this.movies.save(movie);
+    await this.cache.invalidate();
+    return MovieResponseDto.fromEntity(saved);
+  }
+
+  async update(id: string, dto: UpdateMovieDto): Promise<MovieResponseDto> {
+    const movie = await this.movies.findOne({ where: { id }, relations: { genres: true } });
+    if (!movie) {
+      throw new NotFoundException(`Movie ${id} not found`);
+    }
+    if (dto.title !== undefined) movie.title = dto.title;
+    if (dto.overview !== undefined) movie.overview = dto.overview ?? null;
+    if (dto.releaseDate !== undefined) movie.releaseDate = dto.releaseDate ?? null;
+    if (dto.posterPath !== undefined) movie.posterPath = dto.posterPath ?? null;
+    if (dto.popularity !== undefined) movie.popularity = dto.popularity;
+    if (dto.genreIds !== undefined) movie.genres = await this.resolveGenres(dto.genreIds);
+
+    const saved = await this.movies.save(movie);
+    await this.cache.invalidate(id);
+    return MovieResponseDto.fromEntity(saved);
+  }
+
+  async remove(id: string): Promise<void> {
+    const result = await this.movies.delete(id);
+    if (!result.affected) {
+      throw new NotFoundException(`Movie ${id} not found`);
+    }
+    await this.cache.invalidate(id);
+  }
+
+  private async resolveGenres(ids?: number[]): Promise<Genre[]> {
+    if (!ids?.length) {
+      return [];
+    }
+    return this.genres.findBy({ id: In(ids) });
   }
 
   private buildQuery(query: ListMoviesQueryDto): SelectQueryBuilder<Movie> {

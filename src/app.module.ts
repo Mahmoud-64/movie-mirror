@@ -9,6 +9,7 @@ import { TmdbModule } from './modules/tmdb/tmdb.module';
 import { SyncModule } from './modules/sync/sync.module';
 import { MoviesModule } from './modules/movies/movies.module';
 import { RatingsModule } from './modules/ratings/ratings.module';
+import { WatchlistModule } from './modules/watchlist/watchlist.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { RatingsModule } from './modules/ratings/ratings.module';
     SyncModule,
     MoviesModule,
     RatingsModule,
+    WatchlistModule,
   ],
   controllers: [HealthController],
 })
