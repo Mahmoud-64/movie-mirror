@@ -1,0 +1,14 @@
+node_modules/
+dist/
+coverage/
+*.log
+.env
+.env.*
+!.env.example
+
+# Local tooling — not part of the deliverable
+.claude/
+CLAUDE.md
+.specify/
+specs/
+.DS_Store

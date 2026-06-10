@@ -1,0 +1,71 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [dev, staging, main]
+  push:
+    branches: [dev]
+
+jobs:
+  test:
+    name: Lint, build & test
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: tmdb
+          POSTGRES_PASSWORD: tmdb
+          POSTGRES_DB: tmdb
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U tmdb"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgres://tmdb:tmdb@localhost:5432/tmdb
+      REDIS_URL: redis://localhost:6379
+      TMDB_API_BASE_URL: https://api.themoviedb.org/3
+      TMDB_API_TOKEN: ${{ secrets.TMDB_API_TOKEN }}
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      HUSKY: 0
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npx eslint "{src,test}/**/*.ts"
+
+      - name: Check formatting
+        run: npx prettier --check "src/**/*.ts" "test/**/*.ts"
+
+      - name: Build
+        run: npm run build
+
+      - name: Unit tests (coverage gate >= 85%)
+        run: npm run test:cov
+
+      - name: End-to-end tests
+        run: npm run test:e2e
