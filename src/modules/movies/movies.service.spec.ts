@@ -50,6 +50,7 @@ describe('MoviesService', () => {
     qb = {
       leftJoinAndSelect: jest.fn().mockReturnThis(),
       andWhere: jest.fn().mockReturnThis(),
+      addSelect: jest.fn().mockReturnThis(),
       orderBy: jest.fn().mockReturnThis(),
       skip: jest.fn().mockReturnThis(),
       take: jest.fn().mockReturnThis(),
@@ -102,12 +103,13 @@ describe('MoviesService', () => {
     });
   });
 
-  it('orders by the rating expression when sorting by rating', async () => {
+  it('orders by the coalesced rating expression alias when sorting by rating', async () => {
     await service.list(query({ sortBy: MovieSortBy.RATING, order: SortOrder.ASC }));
-    expect(qb.orderBy).toHaveBeenCalledWith(
-      'movie.ratingSum / NULLIF(movie.ratingCount, 0)',
-      'ASC',
+    expect(qb.addSelect).toHaveBeenCalledWith(
+      'COALESCE(CAST(movie.ratingSum AS numeric) / NULLIF(movie.ratingCount, 0), 0)',
+      'avg_rating',
     );
+    expect(qb.orderBy).toHaveBeenCalledWith('avg_rating', 'ASC');
   });
 
   it('paginates with skip/take derived from page and limit', async () => {

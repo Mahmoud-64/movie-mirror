@@ -39,8 +39,9 @@ export class MoviesController {
   }
 
   @Post()
+  // DEMO ONLY: regular users may manage movies. Restore @Roles(UserRole.ADMIN) before production.
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.USER, UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiCreatedResponse({ type: MovieResponseDto })
   create(@Body() body: CreateMovieDto): Promise<MovieResponseDto> {
@@ -48,8 +49,9 @@ export class MoviesController {
   }
 
   @Patch(':id')
+  // DEMO ONLY: regular users may manage movies. Restore @Roles(UserRole.ADMIN) before production.
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.USER, UserRole.ADMIN)
   @ApiBearerAuth()
   @ApiOkResponse({ type: MovieResponseDto })
   update(
@@ -60,8 +62,9 @@ export class MoviesController {
   }
 
   @Delete(':id')
+  // DEMO ONLY: regular users may manage movies. Restore @Roles(UserRole.ADMIN) before production.
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles(UserRole.ADMIN)
+  @Roles(UserRole.USER, UserRole.ADMIN)
   @ApiBearerAuth()
   @HttpCode(204)
   remove(@Param('id', ParseUUIDPipe) id: string): Promise<void> {

@@ -106,17 +106,26 @@ describe('TMDB service (e2e)', () => {
     expect(res.body.ratingCount).toBe(1);
   });
 
-  it('enforces admin role on movie creation', async () => {
-    const body = { tmdbId: 555, title: 'Admin Created' };
-    await http().post('/movies').send(body).expect(401);
-    await http().post('/movies').set('Authorization', `Bearer ${userToken}`).send(body).expect(403);
-    const created = await http()
+  it('requires auth for movie writes and lets any authenticated user manage movies (demo)', async () => {
+    await http().post('/movies').send({ tmdbId: 555, title: 'No token' }).expect(401);
+
+    const asUser = await http()
       .post('/movies')
-      .set('Authorization', `Bearer ${adminToken}`)
-      .send(body)
+      .set('Authorization', `Bearer ${userToken}`)
+      .send({ tmdbId: 555, title: 'By user' })
       .expect(201);
     await http()
-      .delete(`/movies/${created.body.id}`)
+      .delete(`/movies/${asUser.body.id}`)
+      .set('Authorization', `Bearer ${userToken}`)
+      .expect(204);
+
+    const asAdmin = await http()
+      .post('/movies')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .send({ tmdbId: 556, title: 'By admin' })
+      .expect(201);
+    await http()
+      .delete(`/movies/${asAdmin.body.id}`)
       .set('Authorization', `Bearer ${adminToken}`)
       .expect(204);
   });

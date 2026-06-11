@@ -8,11 +8,15 @@ import { ListMoviesQueryDto, MovieSortBy, SortOrder } from './dto/list-movies-qu
 import { MovieResponseDto, PaginatedMoviesDto } from './dto/movie-response.dto';
 import { MoviesCache } from './movies.cache';
 
+const RATING_ALIAS = 'avg_rating';
+const RATING_EXPRESSION =
+  'COALESCE(CAST(movie.ratingSum AS numeric) / NULLIF(movie.ratingCount, 0), 0)';
+
 const SORT_COLUMNS: Record<MovieSortBy, string> = {
   [MovieSortBy.POPULARITY]: 'movie.popularity',
   [MovieSortBy.RELEASE_DATE]: 'movie.releaseDate',
   [MovieSortBy.TITLE]: 'movie.title',
-  [MovieSortBy.RATING]: 'movie.ratingSum / NULLIF(movie.ratingCount, 0)',
+  [MovieSortBy.RATING]: RATING_ALIAS,
 };
 
 @Injectable()
@@ -110,6 +114,10 @@ export class MoviesService {
         'movie.id IN (SELECT mg.movie_id FROM movie_genres mg WHERE mg.genre_id IN (:...genreIds))',
         { genreIds: query.genres },
       );
+    }
+
+    if (query.sortBy === MovieSortBy.RATING) {
+      qb.addSelect(RATING_EXPRESSION, RATING_ALIAS);
     }
 
     return qb
